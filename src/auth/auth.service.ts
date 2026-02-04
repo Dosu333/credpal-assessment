@@ -23,36 +23,29 @@ export class AuthService {
   async register(email: string, password: string) {
     const existing = await this.userRepo.findOne({ where: { email } });
     if (existing) throw new ConflictException('Email already in use');
-
-    await this.dataSource.transaction(async (manager) => {
-      // Create User
+  
+    const { savedUser, code } = await this.dataSource.transaction(async (manager) => {
       const salt = await bcrypt.genSalt();
       const passwordHash = await bcrypt.hash(password, salt);
-
+  
       const user = manager.create(User, { email, passwordHash });
       const savedUser = await manager.save(user);
-
-      // Generate OTP
-      const code = Math.floor(100000 + Math.random() * 900000).toString(); // 6 digits
+  
+      const code = Math.floor(100000 + Math.random() * 900000).toString();
       const expiresAt = new Date();
-      expiresAt.setMinutes(expiresAt.getMinutes() + 15); // 15 min expiry
-
-      // Save OTP
-      const otp = manager.create(OtpLog, {
-        code,
-        expiresAt,
-        user: savedUser,
-      });
+      expiresAt.setMinutes(expiresAt.getMinutes() + 15);
+  
+      const otp = manager.create(OtpLog, { code, expiresAt, user: savedUser });
       await manager.save(otp);
-
-      // Trigger Event (Non-blocking email)
-      console.log("Sending event for user registration");
-      this.eventEmitter.emit(
-        'user.registered',
-        new UserRegisteredEvent(savedUser.id, savedUser.email, code),
-      );
+  
+      return { savedUser, code };
     });
-
+  
+    this.eventEmitter.emit(
+      'user.registered',
+      new UserRegisteredEvent(savedUser.id, savedUser.email, code),
+    );
+  
     return { message: 'Registration successful. Check your email for OTP.' };
   }
 
