@@ -1,10 +1,11 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  await app.listen(process.env.PORT ?? 3000);
+
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true, // Strips properties that are not in the DTO (Security)
@@ -12,6 +13,20 @@ async function bootstrap() {
       transform: true, // Automatically transforms payloads to DTO instances
     }),
   );
+
+  if (process.env.NODE_ENV !== 'production') {
+    const config = new DocumentBuilder()
+      .setTitle('CredPal Assessment API')
+      .setDescription('CredPal assessment backend service')
+      .setVersion('1.0')
+      .addBearerAuth()
+      .build();
+
+    const document = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('docs', app, document);
+  }
+
+  await app.listen(process.env.PORT ?? 3000);
 }
 
 bootstrap();
