@@ -8,9 +8,9 @@ import { User } from './user.entity';
 
 @Entity('otp_logs')
 export class OtpLog extends BaseEntity{
-  @Column()
-  code: string; // TODO: Hash, but for now, plain text and short-lived
-
+  @Column({ length: 60 })
+  code: string;
+  
   @Column()
   expiresAt: Date;
 

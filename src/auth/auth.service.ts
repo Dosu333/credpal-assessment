@@ -23,34 +23,48 @@ export class AuthService {
   async register(email: string, password: string) {
     const existing = await this.userRepo.findOne({ where: { email } });
     if (existing) throw new ConflictException('Email already in use');
-  
-    const { savedUser, code } = await this.dataSource.transaction(async (manager) => {
-      const salt = await bcrypt.genSalt();
-      const passwordHash = await bcrypt.hash(password, salt);
-  
-      const user = manager.create(User, { email, passwordHash });
-      const savedUser = await manager.save(user);
-  
-      const code = Math.floor(100000 + Math.random() * 900000).toString();
-      const expiresAt = new Date();
-      expiresAt.setMinutes(expiresAt.getMinutes() + 15);
-  
-      const otp = manager.create(OtpLog, { code, expiresAt, user: savedUser });
-      await manager.save(otp);
-  
-      return { savedUser, code };
-    });
-  
+
+    const { savedUser, plainCode } = await this.dataSource.transaction(
+      async (manager) => {
+        // Create User
+        const salt = await bcrypt.genSalt();
+        const passwordHash = await bcrypt.hash(password, salt);
+
+        const user = manager.create(User, { email, passwordHash });
+        const savedUser = await manager.save(user);
+
+        // Generate OTP
+        const plainCode = Math.floor(
+          100000 + Math.random() * 900000,
+        ).toString();
+
+        // Hash OTP
+        const otpSalt = await bcrypt.genSalt();
+        const otpHash = await bcrypt.hash(plainCode, otpSalt);
+
+        const expiresAt = new Date();
+        expiresAt.setMinutes(expiresAt.getMinutes() + 15);
+
+        const otp = manager.create(OtpLog, {
+          code: otpHash,
+          expiresAt,
+          user: savedUser,
+        });
+        await manager.save(otp);
+
+        return { savedUser, plainCode };
+      },
+    );
+
     this.eventEmitter.emit(
       'user.registered',
-      new UserRegisteredEvent(savedUser.id, savedUser.email, code),
+      new UserRegisteredEvent(savedUser.id, savedUser.email, plainCode),
     );
-  
+
     return { message: 'Registration successful. Check your email for OTP.' };
   }
 
   async verifyOtp(email: string, code: string) {
-    // Latest valid OTP for user
     const otpRecord = await this.otpRepo.findOne({
       where: { user: { email }, isUsed: false },
       relations: ['user'],
@@ -58,11 +72,14 @@ export class AuthService {
     });
 
     if (!otpRecord) throw new BadRequestException('Invalid OTP');
-    if (otpRecord.code !== code) throw new BadRequestException('Invalid OTP');
-    if (new Date() > otpRecord.expiresAt)
-      throw new BadRequestException('OTP has expired');
 
-    // Activate User & Invalidate OTP
+    if (new Date() > otpRecord.expiresAt) {
+      throw new BadRequestException('OTP has expired');
+    }
+
+    const isMatch = await bcrypt.compare(code, otpRecord.code);
+    if (!isMatch) throw new BadRequestException('Invalid OTP');
+
     otpRecord.user.isVerified = true;
     otpRecord.isUsed = true;
 
