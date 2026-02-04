@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
+import { NotificationListener } from 'src/notification/notification.listener';
 import { User } from './entities/user.entity';
 import { OtpLog } from './entities/otp-log.entity';
 
@@ -9,7 +10,7 @@ import { OtpLog } from './entities/otp-log.entity';
   imports: [
     TypeOrmModule.forFeature([User, OtpLog]),
   ],
-  providers: [AuthService],
+  providers: [AuthService, NotificationListener],
   controllers: [AuthController]
 })
 export class AuthModule {}

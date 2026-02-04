@@ -1,4 +1,4 @@
-import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
+import { Body, Controller, HttpCode, HttpStatus, Post, Get } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { RegisterDto, VerifyOtpDto } from './dto/auth.dto';
@@ -27,5 +27,13 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   async verify(@Body() dto: VerifyOtpDto) {
     return this.authService.verifyOtp(dto.email, dto.code);
+  }
+
+  @Get('users')
+  @ApiOperation({ summary: 'Get all users (for testing purposes)' })
+  @ApiResponse({ status: 200, description: 'List of all users.' })
+  @HttpCode(HttpStatus.OK)
+  async getAllUsers() {
+    return this.authService.getAllUsers();
   }
 }

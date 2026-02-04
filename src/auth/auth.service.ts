@@ -46,6 +46,7 @@ export class AuthService {
       await manager.save(otp);
 
       // Trigger Event (Non-blocking email)
+      console.log("Sending event for user registration");
       this.eventEmitter.emit(
         'user.registered',
         new UserRegisteredEvent(savedUser.id, savedUser.email, code),
@@ -76,5 +77,9 @@ export class AuthService {
     await this.otpRepo.save(otpRecord);
 
     return { message: 'Account verified successfully.' };
+  }
+
+  async getAllUsers() {
+    return this.userRepo.find();
   }
 }
