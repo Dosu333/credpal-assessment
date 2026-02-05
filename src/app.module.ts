@@ -8,6 +8,7 @@ import { ExpressAdapter } from '@bull-board/express';
 import { AuthModule } from './auth/auth.module';
 import { WalletModule } from './wallet/wallet.module';
 import { SystemModule } from './system/system.module';
+import { FxModule } from './fx/fx.module';
 
 
 @Module({
@@ -44,6 +45,7 @@ import { SystemModule } from './system/system.module';
     AuthModule,
     WalletModule,
     SystemModule,
+    FxModule,
   ],
 })
 
