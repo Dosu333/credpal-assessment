@@ -169,6 +169,23 @@ export class WalletService {
     });
   }
 
+  async convertCurrency(from: string, to: string, amount: number) {
+    // Get Real-Time Rate
+    const rate = await this.fxService.getExchangeRate(from, to);
+
+    // Calculate
+    const convertedAmount = amount * rate;
+
+    return {
+      from,
+      to,
+      amount,
+      rate,
+      convertedAmount,
+      timestamp: Date.now(),
+    };
+  }
+
   async getTransactions(userId: string, query: GetTransactionsDto) {
     const { page = 1, limit = 10, status, currency } = query;
     const skip = (page - 1) * limit;

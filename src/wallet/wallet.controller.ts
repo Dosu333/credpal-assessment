@@ -7,7 +7,7 @@ import {
   Get,
   HttpCode,
   HttpStatus,
-  Query
+  Query,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -23,6 +23,7 @@ import { Roles } from 'src/common/decorators/role.decorators';
 import { Role } from 'src/auth/enums/role.enum';
 import { TradeDto } from './dto/trade.dto';
 import { GetTransactionsDto } from './dto/get-transactions.dto';
+import { ConvertCurrencyDto } from './dto/convert-currency.dto';
 
 @ApiTags('Wallet')
 @ApiBearerAuth()
@@ -57,6 +58,17 @@ export class WalletController {
       dto.fromCurrency,
       dto.toCurrency,
       dto.amount,
+    );
+  }
+
+  @Get('convert')
+  @ApiOperation({ summary: 'Calculate currency conversion (No transaction)' })
+  @ApiResponse({ status: 200, description: 'Conversion successful' })
+  async convert(@Query() query: ConvertCurrencyDto) {
+    return this.walletService.convertCurrency(
+      query.from,
+      query.to,
+      query.amount,
     );
   }
 
