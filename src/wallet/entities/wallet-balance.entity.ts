@@ -1,6 +1,6 @@
 import { Entity, Column, ManyToOne, Unique, JoinColumn } from 'typeorm';
 import { BaseEntity } from 'src/common/entities/base.entity';
-import { Currency } from './currency.entity';
+import { Currency } from '../../system/entities/currency.entity';
 import { Wallet } from './wallet.entity';
 
 @Entity('wallet_balances')

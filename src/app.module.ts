@@ -1,4 +1,3 @@
-// src/app.module.ts
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -8,6 +7,7 @@ import { BullBoardModule } from '@bull-board/nestjs';
 import { ExpressAdapter } from '@bull-board/express';
 import { AuthModule } from './auth/auth.module';
 import { WalletModule } from './wallet/wallet.module';
+import { SystemModule } from './system/system.module';
 
 
 @Module({
@@ -42,8 +42,8 @@ import { WalletModule } from './wallet/wallet.module';
     }),
 
     AuthModule,
-
     WalletModule,
+    SystemModule,
   ],
 })
 

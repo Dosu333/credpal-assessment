@@ -12,6 +12,7 @@ import { UnauthorizedException } from '@nestjs/common';
 import { User } from './entities/user.entity';
 import { OtpLog } from './entities/otp-log.entity';
 import { UserRegisteredEvent } from './events/user-registered.event';
+import { Role } from './enums/role.enum';
 
 @Injectable()
 export class AuthService {
@@ -24,7 +25,7 @@ export class AuthService {
   ) {}
 
   // Register User
-  async register(email: string, password: string) {
+  async register(email: string, password: string, role?: string) {
     const existing = await this.userRepo.findOne({ where: { email } });
     if (existing) throw new ConflictException('Email already in use');
 
@@ -34,7 +35,11 @@ export class AuthService {
         const salt = await bcrypt.genSalt();
         const passwordHash = await bcrypt.hash(password, salt);
 
-        const user = manager.create(User, { email, passwordHash });
+        const roles = role
+        ? [role as Role]
+        : [Role.USER];
+
+        const user = manager.create(User, { email, passwordHash, roles });
         const savedUser = await manager.save(user);
 
         // Generate OTP

@@ -18,7 +18,7 @@ export class AuthController {
   @ApiResponse({ status: 409, description: 'Email already exists.' })
   @HttpCode(HttpStatus.CREATED)
   async register(@Body() dto: RegisterDto) {
-    return this.authService.register(dto.email, dto.password);
+    return this.authService.register(dto.email, dto.password, dto.role);
   }
 
   @Post('verify')

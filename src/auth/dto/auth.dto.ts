@@ -7,6 +7,10 @@ export class RegisterDto {
   @IsNotEmpty()
   email: string;
 
+  @ApiProperty({example: 'user', description: 'User role (optional, defaults to USER)'})
+  @IsString()
+  role?: string;
+
   @ApiProperty({ example: 'strongPassword123', description: 'User password (min 8 chars)' })
   @IsString()
   @MinLength(8, { message: 'Password must be at least 8 characters long' })

@@ -5,7 +5,7 @@ import { Wallet } from './entities/wallet.entity';
 import { WalletBalance } from './entities/wallet-balance.entity';
 import { Transaction, TransactionStatus } from './entities/transaction.entity';
 import { Ledger, LedgerEntryType } from './entities/ledger.entity';
-import { Currency } from './entities/currency.entity';
+import { Currency } from '../system/entities/currency.entity';
 import { SYSTEM_WALLET_ID, EXTERNAL_PROVIDER_ID } from 'src/common/constants/system-wallets.constant';
 
 @Injectable()
@@ -70,6 +70,21 @@ export class WalletService {
       return tx;
     });
   }
+
+    // Get all Wallets and Balances for a User
+    async getUserWallets(userId: string) {
+        const wallets = await this.dataSource.getRepository(Wallet).find({
+            where: { user: { id: userId } },
+            relations: ['balances', 'balances.currency']
+        });
+        return wallets.map(wallet => ({
+            id: wallet.id,
+            balances: wallet.balances.map(balance => ({
+                currency: balance.currency.code,
+                balance: balance.balance
+            }))
+        }));
+    }
 
   /**
    * CORE LEDGER LOGIC
