@@ -1,7 +1,8 @@
-import { Body, Controller, HttpCode, HttpStatus, Post, Get } from '@nestjs/common';
+import { Body, Controller, HttpCode, HttpStatus, Post, Get, UseGuards, Request } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
-import { RegisterDto, VerifyOtpDto } from './dto/auth.dto';
+import { RegisterDto, VerifyOtpDto, LoginDto } from './dto/auth.dto';
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -27,6 +28,16 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   async verify(@Body() dto: VerifyOtpDto) {
     return this.authService.verifyOtp(dto.email, dto.code);
+  }
+
+  @UseGuards(AuthGuard('local'))
+  @Post('login')
+  @ApiOperation({ summary: 'Login with email and password' })
+  async login(
+    @Body() logindto: LoginDto,
+    @Request() req
+  ) {
+    return this.authService.login(req.user);
   }
 
   @Get('users')

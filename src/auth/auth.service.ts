@@ -7,6 +7,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { JwtService } from '@nestjs/jwt';
+import { UnauthorizedException } from '@nestjs/common';
 import { User } from './entities/user.entity';
 import { OtpLog } from './entities/otp-log.entity';
 import { UserRegisteredEvent } from './events/user-registered.event';
@@ -18,8 +20,10 @@ export class AuthService {
     @InjectRepository(OtpLog) private otpRepo: Repository<OtpLog>,
     private dataSource: DataSource,
     private eventEmitter: EventEmitter2,
+    private jwtService: JwtService,
   ) {}
 
+  // Register User
   async register(email: string, password: string) {
     const existing = await this.userRepo.findOne({ where: { email } });
     if (existing) throw new ConflictException('Email already in use');
@@ -63,7 +67,8 @@ export class AuthService {
 
     return { message: 'Registration successful. Check your email for OTP.' };
   }
-
+  
+  // Verify OTP
   async verifyOtp(email: string, code: string) {
     const otpRecord = await this.otpRepo.findOne({
       where: { user: { email }, isUsed: false },
@@ -87,6 +92,31 @@ export class AuthService {
     await this.otpRepo.save(otpRecord);
 
     return { message: 'Account verified successfully.' };
+  }
+
+  // Validate User for Login
+  async validateUser(email: string, pass: string): Promise<any> {
+    const user = await this.userRepo.findOne({
+      where: { email },
+      select: ['id', 'email', 'passwordHash', 'roles', 'isVerified'],
+    });
+
+    if (user && (await bcrypt.compare(pass, user.passwordHash))) {
+      if (!user.isVerified)
+        throw new UnauthorizedException('Account not verified');
+
+      const { passwordHash, ...result } = user;
+      return result;
+    }
+    return null;
+  }
+
+  // Login User
+  async login(user: any) {
+    const payload = { sub: user.id, email: user.email, roles: user.roles };
+    return {
+      access_token: this.jwtService.sign(payload),
+    };
   }
 
   async getAllUsers() {

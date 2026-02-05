@@ -24,3 +24,14 @@ export class VerifyOtpDto {
   @MinLength(6)
   code: string;
 }
+
+
+export class LoginDto {
+  @ApiProperty()
+  @IsEmail()
+  email: string;
+
+  @ApiProperty()
+  @IsString()
+  password: string;
+}
