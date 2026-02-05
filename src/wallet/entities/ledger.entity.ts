@@ -4,12 +4,17 @@ import { Wallet } from './wallet.entity';
 import { Transaction } from './transaction.entity';
 import { Currency } from './currency.entity';
 
+export enum LedgerEntryType {
+  DEBIT = 'DEBIT',
+  CREDIT = 'CREDIT',
+}
+
 @Entity('ledgers')
 export class Ledger extends BaseEntity {
   @Column({ type: 'decimal', precision: 18, scale: 4 })
   amount: number;
 
-  @Column({ type: 'enum', enum: ['DEBIT', 'CREDIT'] })
+  @Column({ type: 'enum', enum: LedgerEntryType })
   entryType: 'DEBIT' | 'CREDIT';
 
   @ManyToOne(() => Wallet) 

@@ -1,4 +1,7 @@
 import { Module } from '@nestjs/common';
+import { WalletService } from './wallet.service';
 
-@Module({})
+@Module({
+  providers: [WalletService]
+})
 export class WalletModule {}
