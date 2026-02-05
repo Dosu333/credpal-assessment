@@ -146,3 +146,34 @@ docker compose exec app npm run test
 docker compose exec app npm run test -- wallet.service
 
 ```
+
+Adding a "Future Improvements" or "Roadmap" section is a fantastic way to show interviewers that you understand the limitations of an MVP and know how to scale a production system.
+
+Here is the professional **Future Roadmap** section to append to your `README.md`.
+
+---
+
+## 🔮 Future Roadmap & Improvements
+
+While this demonstrates core financial integrity, a production-grade release would include the following enhancements:
+
+### 1. Scalability & Async Processing
+
+* **Message Queues (RabbitMQ/Kafka):** currently, ledger entries are processed synchronously within the HTTP request. For high-volume systems, we would offload transaction processing to a queue to handle spikes in traffic without blocking the main thread.
+* **Horizontal Scaling:** Containerize the API to run multiple replicas behind a load balancer (Nginx/AWS ALB).
+
+### 2. Advanced Security
+
+* **Rate Limiting (Throttling):** Implement `@nestjs/throttler` to prevent DDoS attacks and API abuse.
+* **IP Whitelisting:** Restrict the Admin API (`/admin/*`) to specific internal IP addresses or VPNs.
+* **2FA (Two-Factor Authentication):** Integrate TOTP (Time-based One-Time Password) for withdrawals and sensitive settings changes.
+
+### 3. Observability
+
+* **Structured Logging:** Replace console logs with a structured logger (e.g., Pino) for ingestion into ELK Stack or Datadog.
+* **Metrics:** Expose a `/metrics` endpoint using Prometheus to track transaction throughput, latency, and error rates.
+
+### 4. Financial Features
+
+* **KYC/KYB Integration:** Integrate an identity verification provider (e.g., SmileID) before allowing users to generate wallets.
+* **Webhooks:** Implement a webhook system to notify clients (frontend/mobile) of successful deposits or state changes in real-time.
