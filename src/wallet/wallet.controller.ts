@@ -1,11 +1,26 @@
-import { Controller, Post, Body, UseGuards, Request, Get, HttpCode, HttpStatus } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  Controller,
+  Post,
+  Body,
+  UseGuards,
+  Request,
+  Get,
+  HttpCode,
+  HttpStatus,
+} from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { WalletService } from './wallet.service';
 import { FundWalletDto } from './dto/wallet.dto';
 import { JwtAuthGuard } from 'src/common/guards/jwt.guard';
 import { RolesGuard } from 'src/common/guards/role.guard';
 import { Roles } from 'src/common/decorators/role.decorators';
 import { Role } from 'src/auth/enums/role.enum';
+import { TradeDto } from './dto/trade.dto';
 
 @ApiTags('Wallet')
 @ApiBearerAuth()
@@ -30,6 +45,17 @@ export class WalletController {
       dto.currency,
       reference,
     );
+  }
+
+  @Post('trade')
+  @ApiOperation({ summary: 'Trade/Swap currencies' })
+  async trade(@Request() req, @Body() dto: TradeDto) {
+    return this.walletService.tradeCurrency(
+      req.user.id,
+      dto.fromCurrency,
+      dto.toCurrency,
+      dto.amount,
+    ); 
   }
 
   @Get('balance')
