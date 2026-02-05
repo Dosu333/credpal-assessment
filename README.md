@@ -2,7 +2,7 @@
 
 A high-integrity financial backend built with **NestJS**, **PostgreSQL**, and **Redis**. This system implements double-entry accounting, optimistic/pessimistic locking, and real-time FX trading with robust security practices.
 
-## 🏗 Architectural Decisions & Senior Patterns
+## 🏗 Architectural Decisions
 
 This project moves beyond standard CRUD to address concurrency, auditability, and security in financial applications.
 
