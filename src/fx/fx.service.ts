@@ -9,7 +9,7 @@ import { ConfigService } from '@nestjs/config';
 export class FxService {
   private readonly logger = new Logger(FxService.name);
   private readonly baseUrl = 'https://v6.exchangerate-api.com/v6';
-  private readonly SOFT_TTL_MS = 30 * 1000; // 30 Seconds Freshness
+  private readonly SOFT_TTL_MS = 30 * 1000; // 30 Seconds
 
   constructor(
     private httpService: HttpService,

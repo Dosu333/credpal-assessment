@@ -7,6 +7,7 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Query
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -21,6 +22,7 @@ import { RolesGuard } from 'src/common/guards/role.guard';
 import { Roles } from 'src/common/decorators/role.decorators';
 import { Role } from 'src/auth/enums/role.enum';
 import { TradeDto } from './dto/trade.dto';
+import { GetTransactionsDto } from './dto/get-transactions.dto';
 
 @ApiTags('Wallet')
 @ApiBearerAuth()
@@ -55,7 +57,14 @@ export class WalletController {
       dto.fromCurrency,
       dto.toCurrency,
       dto.amount,
-    ); 
+    );
+  }
+
+  @Get('transactions')
+  @ApiOperation({ summary: 'Get transaction history with pagination' })
+  @ApiResponse({ status: 200, description: 'List of transactions' })
+  async getHistory(@Request() req, @Query() query: GetTransactionsDto) {
+    return this.walletService.getTransactions(req.user.id, query);
   }
 
   @Get('balance')

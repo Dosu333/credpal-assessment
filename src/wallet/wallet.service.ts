@@ -11,6 +11,7 @@ import {
   EXTERNAL_PROVIDER_ID,
 } from 'src/common/constants/system-wallets.constant';
 import { FxService } from 'src/fx/fx.service';
+import { GetTransactionsDto } from './dto/get-transactions.dto';
 
 @Injectable()
 export class WalletService {
@@ -18,6 +19,8 @@ export class WalletService {
     private dataSource: DataSource,
     private fxService: FxService,
     @InjectRepository(Currency) private currencyRepo: Repository<Currency>,
+    @InjectRepository(Transaction)
+    private transactionRepo: Repository<Transaction>,
   ) {}
 
   /**
@@ -164,6 +167,40 @@ export class WalletService {
         credited: convertedAmount,
       };
     });
+  }
+
+  async getTransactions(userId: string, query: GetTransactionsDto) {
+    const { page = 1, limit = 10, status, currency } = query;
+    const skip = (page - 1) * limit;
+
+    const queryBuilder = this.transactionRepo
+      .createQueryBuilder('tx')
+      .leftJoinAndSelect('tx.wallet', 'wallet') // Join wallet to filter by user
+      .where('wallet.user.id = :userId', { userId })
+      .orderBy('tx.createdAt', 'DESC')
+      .skip(skip)
+      .take(limit);
+
+    // Apply Filters if they exist
+    if (status) {
+      queryBuilder.andWhere('tx.status = :status', { status });
+    }
+
+    if (currency) {
+      queryBuilder.andWhere('tx.currency = :currency', { currency });
+    }
+
+    const [items, total] = await queryBuilder.getManyAndCount();
+
+    return {
+      data: items,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
   }
 
   // Get all Wallets and Balances for a User
