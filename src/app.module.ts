@@ -7,6 +7,7 @@ import { BullModule } from '@nestjs/bullmq';
 import { BullBoardModule } from '@bull-board/nestjs';
 import { ExpressAdapter } from '@bull-board/express';
 import { AuthModule } from './auth/auth.module';
+import { WalletModule } from './wallet/wallet.module';
 
 
 @Module({
@@ -41,6 +42,8 @@ import { AuthModule } from './auth/auth.module';
     }),
 
     AuthModule,
+
+    WalletModule,
   ],
 })
 
