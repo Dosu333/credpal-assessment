@@ -104,7 +104,7 @@ docker compose exec app npm run seed:currencies
 
 
 2. **External Providers:**
-* Funding is simulated via an `EXTERNAL_PROVIDER_ID` wallet. In a production environment, this would integrate with webhooks from Stripe/Paystack.
+* Funding is simulated via an `EXTERNAL_PROVIDER_ID` wallet. In a production environment, this would integrate with webhooks from Flutterwave/Paystack.
 
 
 3. **Idempotency:**
