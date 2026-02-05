@@ -1,98 +1,148 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# FX Trading App (NestJS)
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+A high-integrity financial backend built with **NestJS**, **PostgreSQL**, and **Redis**. This system implements double-entry accounting, optimistic/pessimistic locking, and real-time FX trading with robust security practices.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## 🏗 Architectural Decisions & Senior Patterns
 
-## Description
+This project moves beyond standard CRUD to address concurrency, auditability, and security in financial applications.
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+### 1. Financial Integrity (Double-Entry Ledger)
 
-## Project setup
+* **Decision:** We do not simply update a `balance` column. Every financial movement involves a **Ledger Entry** (Debit/Credit).
+* **Why:** Ensures auditability. Money is never created or destroyed; it moves from `External_Provider`  `User` or `User`  `System_Liquidity`.
+* **Atomicity:** All ledger entries and balance updates occur within a single ACID transaction.
 
-```bash
-$ npm install
-```
+### 2. Concurrency Control (Pessimistic Locking)
 
-## Compile and run the project
+* **Decision:** Utilizes `lock: { mode: 'pessimistic_write' }` on Wallet Balance rows during transactions.
+* **Why:** Prevents "Double-Spend" attacks and race conditions where two concurrent requests could spend the same funds.
 
-```bash
-# development
-$ npm run start
+### 3. Security (Token Rotation)
 
-# watch mode
-$ npm run start:dev
+* **Decision:** Implements **Short-lived Access Tokens (15m)** and **Long-lived Refresh Tokens (7d)** with rotation logic.
+* **Why:** Allows for immediate revocation of access in compromised scenarios without forcing frequent user logins. Revoked refresh tokens are tracked in the database.
 
-# production mode
-$ npm run start:prod
-```
+### 4. Performance (Tiered FX Caching)
 
-## Run tests
+* **Decision:** Uses a **Stale-While-Revalidate** strategy with Redis.
+* **Why:** Eliminates latency spikes. If data is slightly stale (30s-60s), the system serves the cached rate immediately while triggering a background refresh, ensuring 0ms latency for the user while maintaining data freshness.
 
-```bash
-# unit tests
-$ npm run test
+### 5. Domain-Driven Design (Modular Architecture)
 
-# e2e tests
-$ npm run test:e2e
+* **Decision:** The `Currency` logic is isolated in the `SystemModule` and exported.
+* **Why:** Prevents circular dependencies and ensures strict boundary enforcement. The `WalletService` consumes a clean API rather than accessing raw repositories of other domains.
 
-# test coverage
-$ npm run test:cov
-```
+---
 
-## Deployment
+## 🚀 Setup Instructions
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+### Prerequisites
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+* Docker & Docker Compose
+* Node.js (v18+) (Optional, for local dev)
+
+### 1. Environment Configuration
+
+Create a `.env` file in the root directory:
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+# App
+NODE_ENV=development
+PORT=3000
+
+# Security
+JWT_SECRET=super_secure_secret_key_change_me
+JWT_EXPIRATION=15m
+REFRESH_TOKEN_EXPIRATION=7d
+
+# Database (Postgres)
+DB_HOST=postgres
+DB_PORT=5432
+DB_USERNAME=user
+DB_PASSWORD=password
+DB_NAME=fintech_wallet
+
+# Cache (Redis)
+REDIS_HOST=redis
+REDIS_PORT=6379
+
+# External APIs
+FX_API_KEY=your_exchangerate_api_key
+
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+### 2. Run with Docker
 
-## Resources
+The entire stack (App, DB, Redis) is containerized.
 
-Check out a few resources that may come in handy when working with NestJS:
+```bash
+# Start the services
+docker compose up --build
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+# Run in detached mode
+docker compose up -d
 
-## Support
+```
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+### 3. Database Seeding (Critical)
 
-## Stay in touch
+For the ledger to work, the system requires "System Wallets" (The House) and default Currencies.
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+```bash
+# Run the seed script inside the container
+docker compose exec app npm run seed:system
+docker compose exec app npm run seed:currencies
 
-## License
+```
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+---
+
+## 🔑 Key Assumptions
+
+1. **System Liquidity:**
+* The system operates on an "Infinite Liquidity" assumption for the MVP. While we track `System Wallet` balances via the ledger, strict checks blocking trades due to low system liquidity are currently disabled to facilitate testing.
+
+
+2. **External Providers:**
+* Funding is simulated via an `EXTERNAL_PROVIDER_ID` wallet. In a production environment, this would integrate with webhooks from Stripe/Paystack.
+
+
+3. **Idempotency:**
+* All financial endpoints require a unique `reference` key (or generate one) to prevent duplicate processing of the same transaction.
+
+
+
+---
+
+## 📚 API Documentation
+
+Once the application is running, full **OpenAPI / Swagger** documentation is available at:
+
+> **http://localhost:3000/docs**
+
+### Core Endpoints
+
+| Module | Method | Endpoint | Description |
+| --- | --- | --- | --- |
+| **Auth** | `POST` | `/auth/login` | Returns Access & Refresh Tokens |
+| **Auth** | `POST` | `/auth/refresh` | Rotates Refresh Token to get new Access Token |
+| **Wallet** | `POST` | `/wallet/fund` | Deposits funds (External  User) |
+| **Wallet** | `POST` | `/wallet/trade` | Swaps currencies (Atomic Double-Entry) |
+| **Wallet** | `GET` | `/wallet/transactions` | Paginated transaction history with filters |
+| **FX** | `GET` | `/fx/rates` | Live exchange rates for supported currencies |
+| **Admin** | `POST` | `/admin/system/currency` | Add/Disable supported currencies |
+
+---
+
+## 🧪 Running Tests
+
+The project includes comprehensive integration tests for the financial core.
+
+```bash
+# Run Unit & Integration Tests
+docker compose exec app npm run test
+
+# Run specific Wallet Service tests
+docker compose exec app npm run test -- wallet.service
+
+```
